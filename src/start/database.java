@@ -1,39 +1,67 @@
 package start;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class database {
-    void connect() {
-        Connection conn = null;
+    public static Connection conn = null;
+    public static String dbURL = "";
+    static String user = "";
+    static String pass = "";
 
+    static void connect(String host, String port, String dbName, String username, String password) throws SQLException {
         try {
-
-            String dbURL = "jdbc:sqlserver://localhost\\sqlexpress";
-            String user = "sa";
-            String pass = "secret";
+            dbURL = "jdbc:sqlserver://"+ host + ":"+ port+ ";"
+                    + "databaseName=" + dbName + ";"
+                    + "integratedSecurity=true";
+            user = username;
+            pass = password;
             conn = DriverManager.getConnection(dbURL, user, pass);
-            if (conn != null) {
-                DatabaseMetaData dm = (DatabaseMetaData) conn.getMetaData();
-                System.out.println("Driver name: " + dm.getDriverName());
-                System.out.println("Driver version: " + dm.getDriverVersion());
-                System.out.println("Product name: " + dm.getDatabaseProductName());
-                System.out.println("Product version: " + dm.getDatabaseProductVersion());
-            }
-
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            throw ex;
         } finally {
             try {
                 if (conn != null && !conn.isClosed()) {
                     conn.close();
                 }
-            } catch (SQLException ex) {
+             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         }
+    }
+
+    public static List<hocsinh> getHS() throws SQLException {
+        conn = DriverManager.getConnection(dbURL);
+        List<hocsinh> ds = new ArrayList<hocsinh>();
+        try {
+            if (conn != null) {
+                Statement stmt = conn.createStatement();
+                ResultSet rs;
+
+                rs = stmt.executeQuery("SELECT * FROM hocsinh");
+                while ( rs.next() ) {
+                    hocsinh hs = new hocsinh();
+                    hs.mahs = rs.getString("MHS");
+                    hs.tenhs = rs.getString("nameHS");
+                    hs.diem = Float.parseFloat(rs.getString("score"));
+                    hs.hinh = rs.getString("image");
+                    hs.diachi = rs.getString("adress");
+                    hs.note = rs.getString("note");
+
+                    ds.add(hs);
+                }
+            }
+        } catch (Exception ex) {
+            throw ex;
+        } finally {
+            conn.close();
+        }
+        return ds;
+    }
+
+    public static void close() throws SQLException {
+        conn.close();
     }
 }
